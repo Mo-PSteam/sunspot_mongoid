@@ -19,7 +19,6 @@ module Sunspot
     def self.included(base)
       base.class_eval do
         extend Sunspot::Rails::Searchable::ActsAsMethods
-        extend Sunspot::Mongoid::ActsAsMethods
         Sunspot::Adapters::DataAccessor.register(DataAccessor, base)
         Sunspot::Adapters::InstanceAdapter.register(InstanceAdapter, base)
       end
@@ -42,22 +41,27 @@ module Sunspot
       end
     end
 
-
     class InstanceAdapter < Sunspot::Adapters::InstanceAdapter
       def id
-        @instance.id.to_s
+        @instance.id
       end
     end
 
     class DataAccessor < Sunspot::Adapters::DataAccessor
       def load(id)
-        @clazz.find(id) rescue nil
+        criteria(id).first
       end
 
       def load_all(ids)
-        @clazz.where(:_id.in => ids.map { |id| BSON::ObjectId.from_string(id) })
+        criteria(ids)
       end
-      
+
+      private
+
+      def criteria(ids)
+        c = @clazz.criteria
+        c.respond_to?(:for_ids) ? c.for_ids(ids) : c.id(ids)
+      end
     end
   end
 end
