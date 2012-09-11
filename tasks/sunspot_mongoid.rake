@@ -37,7 +37,9 @@ namespace :sunspot do
     end
     sunspot_models.each do |model|
       puts "Re-indexing #{model.name}"
-      model.solr_reindex
+      # model.solr_reindex
+      model.all.each(&:index)
+      Sunspot.commit
     end
   end
 end
